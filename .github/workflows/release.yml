@@ -1,0 +1,36 @@
+# Baut beim Veröffentlichen eines GitHub-Releases die Modul-ZIP und hängt sie samt module.json an.
+# Der Tag des Releases (z. B. "v0.2.0" oder "0.2.0") wird zur Modulversion.
+name: Modul-Release
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Version und Download-Link setzen
+        working-directory: km-waldgenerator
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          DOWNLOAD="https://github.com/${GITHUB_REPOSITORY}/releases/download/${GITHUB_REF_NAME}/km-waldgenerator.zip"
+          jq --arg v "$VERSION" --arg d "$DOWNLOAD" '.version = $v | .download = $d' module.json > module.tmp
+          mv module.tmp module.json
+          cat module.json
+
+      - name: ZIP bauen (module.json im Wurzelverzeichnis)
+        working-directory: km-waldgenerator
+        run: zip -r ../km-waldgenerator.zip . -x "README.md"
+
+      - name: Dateien an den Release hängen
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            km-waldgenerator/module.json
+            km-waldgenerator.zip

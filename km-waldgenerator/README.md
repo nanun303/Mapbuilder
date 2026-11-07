@@ -27,6 +27,16 @@ Empfohlener Ablauf:
 3. „Vorschau“ und bei Bedarf „Neu würfeln“
 4. „Wald erzeugen“
 
-## Installation auf The Forge
+## Installation
 
-Import Wizard → `km-waldgenerator.zip` hochladen → als Custom Package importieren, danach in der Welt aktivieren.
+Manifest-URL:
+
+```
+https://github.com/nanun303/Mapbuilder/releases/latest/download/module.json
+```
+
+Alternativ auf The Forge: Import Wizard → `km-waldgenerator.zip` aus dem neuesten Release hochladen → als Custom Package importieren.
+
+## Neue Version veröffentlichen
+
+Auf GitHub einen Release mit neuem Tag anlegen (z. B. `v0.2.0`). Die GitHub Action setzt die Version, baut die ZIP und hängt sie mit der `module.json` an den Release.
