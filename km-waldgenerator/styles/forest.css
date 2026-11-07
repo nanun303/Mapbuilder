@@ -98,6 +98,42 @@
   font-weight: bold;
 }
 
+.km-cover .kmw-cover-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 14rem;
+  overflow-y: auto;
+}
+
+.km-cover .kmw-cover-list li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.15rem 0;
+}
+
+.km-cover .kmw-cover-list img {
+  width: 2.5rem;
+  height: 2.5rem;
+  object-fit: contain;
+  border: none;
+  flex: 0 0 auto;
+}
+
+.km-cover .kmw-cover-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.km-cover .kmw-cover-badge {
+  flex: 0 0 auto;
+  font-size: var(--font-size-11, 11px);
+  opacity: 0.8;
+}
+
 .km-wald.busy .kmw-footer button {
   pointer-events: none;
   opacity: 0.5;

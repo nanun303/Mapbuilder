@@ -1,4 +1,5 @@
 import { MODULE_ID } from "./config.js";
+import { imageHull } from "./cover.js";
 
 const ASSET_DIR = `modules/${MODULE_ID}/assets/`;
 const IMAGE_RX = /\.(webp|png|jpe?g|svg|avif|gif)$/i;
@@ -156,6 +157,10 @@ export async function loadAssets(cfg) {
   }
 
   const logs = cfg.logDensity > 0 ? await cache.files(cfg.logFolder, cfg.logFilter) : [];
+  // Hitbox: Umriss der sichtbaren Pixel jedes Totholz-Bildes, für Cover-Wände und Klettern
+  if (cfg.logCover) {
+    await Promise.all(logs.map(async (l) => (l.hull = await imageHull(l.src))));
+  }
 
   let bushes = [];
   if (cfg.undergrowth !== "none" && cfg.bushDensity > 0) {

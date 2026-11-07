@@ -10,7 +10,12 @@ Foundry-VTT-Modul (v13/v14) zum Erzeugen großer Wald-Battlemaps. Alle Bäume si
 - Standardmäßig auf FA-Nexus-Assets eingestellt (`fa-nexus-assets/Woodlands/!Wilderness/Flora/...`):
   alle Bäume als Kronen, Stümpfe Ashen/Dark/Light nur in Version B
 - Größe aus FA-Dateinamen (`_6x6`), Stammgröße relativ zur Krone
-- Totholz (liegende Stämme), optional als schwieriges Gelände
+- Totholz (liegende Stämme) als Cover: Wände entlang des Bildumrisses (automatische Hitbox),
+  die Bewegung blockieren, aber keine Sicht. PF2e Toolbelt (Auto Cover) wertet sie als Cover.
+- Klettern: Token an ein Cover-Objekt stellen, auswählen und auf das Objekt klicken.
+  Athletik (Klettern) gegen den SG, bei Erfolg landet das Token auf der anderen Seite,
+  bei kritischem Fehlschlag liegt es am Boden.
+- Cover-Button: beliebige ausgewählte Tiles mit denselben Regeln belegen oder sie wieder entfernen
 - Freiflächen: Zeichnungen der Szene, zufällige Lichtungen und Wege
 - Wände um dicke Stämme (Bewegung und/oder Sicht)
 - Unterholz mit Büschen und PF2e-Region für (größeres) schwieriges Gelände

@@ -1,0 +1,54 @@
+<div class="kmw-cover-body">
+  <p class="hint">
+    Wähle auf der Tile-Ebene ein oder mehrere Objekte aus (Klick, Umschalt+Klick oder Rahmen ziehen).
+    Sie bekommen dieselben Regeln wie liegende Stämme: Wände entlang des Umrisses (Cover für PF2e Toolbelt)
+    und Klettern per Klick.
+  </p>
+
+  <fieldset>
+    <legend>Ausgewählt</legend>
+    {{#if hasTiles}}
+    <ul class="kmw-cover-list">
+      {{#each tiles}}
+      <li>
+        <img src="{{src}}" alt="">
+        <span class="kmw-cover-name">{{name}}</span>
+        {{#if cover}}<span class="kmw-cover-badge">{{cover}}</span>{{/if}}
+      </li>
+      {{/each}}
+    </ul>
+    {{else}}
+    <p class="hint">Keine Tiles ausgewählt.</p>
+    {{/if}}
+  </fieldset>
+
+  <fieldset>
+    <legend>Regeln</legend>
+    <div class="form-group">
+      <label>Kletter-SG</label>
+      <div class="form-fields"><input type="number" name="dc" value="{{opts.dc}}" min="0" step="1"></div>
+      <p class="hint">0 = Klettern ohne Wurf.</p>
+    </div>
+    <div class="form-group">
+      <label>Hitbox</label>
+      <div class="form-fields"><select name="outline">{{selectOptions outlines selected=opts.outline}}</select></div>
+      <p class="hint">Automatisch: Umriss der sichtbaren Pixel des Bildes. Rechteck: Bildrand minus Rand.</p>
+    </div>
+    <div class="form-group">
+      <label>Rand bei Rechteck (%)</label>
+      <div class="form-fields"><input type="number" name="inset" value="{{opts.inset}}" min="0" max="45" step="1"></div>
+    </div>
+    <div class="form-group">
+      <label>Blockiert Sicht</label>
+      <div class="form-fields"><input type="checkbox" name="blockSight" {{checked opts.blockSight}}></div>
+      <p class="hint">Für hohe Objekte (Felsen, Mauern). Liegende Stämme blockieren keine Sicht.</p>
+    </div>
+  </fieldset>
+
+  <footer class="kmw-footer">
+    <div class="kmw-footer-row">
+      <button type="button" data-action="remove"><i class="fa-solid fa-eraser"></i> Cover entfernen</button>
+      <button type="submit" class="kmw-primary"><i class="fa-solid fa-shield-halved"></i> Cover setzen</button>
+    </div>
+  </footer>
+</div>

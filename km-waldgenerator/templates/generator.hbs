@@ -225,9 +225,14 @@
       <p class="hint">Liegende Stämme pro 10 × 10 Felder (0 = keine) und Skalierung.</p>
     </div>
     <div class="form-group">
-      <label>Schwieriges Gelände</label>
-      <div class="form-fields"><input type="checkbox" name="logDifficult" {{checked cfg.logDifficult}}></div>
-      <p class="hint">Fläche unter jedem liegenden Stamm wird Teil der Unterholz-Region.</p>
+      <label>Als Cover</label>
+      <div class="form-fields"><input type="checkbox" name="logCover" {{checked cfg.logCover}}></div>
+      <p class="hint">Wände entlang des Bildumrisses (automatische Hitbox): blockieren Bewegung, nicht Sicht. PF2e Toolbelt wertet sie als Cover.</p>
+    </div>
+    <div class="form-group">
+      <label>Kletter-SG</label>
+      <div class="form-fields"><input type="number" name="logClimbDC" value="{{cfg.logClimbDC}}" min="0" step="1"></div>
+      <p class="hint">Steht ein Token am Stamm, klickt der Spieler darauf: Athletik-Wurf (Klettern), bei Erfolg landet das Token auf der anderen Seite.</p>
     </div>
   </fieldset>
 

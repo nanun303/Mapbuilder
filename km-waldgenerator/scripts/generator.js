@@ -213,6 +213,28 @@ function rotatePoints(pts, cx, cy, deg) {
   return out;
 }
 
+/** Ersatz-Umriss (Anteile des Bildes), falls der Bildumriss nicht gelesen werden kann. */
+export const DEFAULT_HULL = [0.1, 0.15, 0.9, 0.15, 0.9, 0.85, 0.1, 0.85];
+
+/**
+ * Überträgt einen Umriss in Bild-Anteilen (0..1) auf die Karte.
+ * @param {number[]} hull  [u0, v0, u1, v1, ...]
+ */
+export function hullToWorld(hull, cx, cy, w, h, rotation = 0, flipX = false, flipY = false) {
+  const a = (rotation * Math.PI) / 180;
+  const cos = Math.cos(a);
+  const sin = Math.sin(a);
+  const out = [];
+  for (let i = 0; i < hull.length; i += 2) {
+    const u = flipX ? 1 - hull[i] : hull[i];
+    const v = flipY ? 1 - hull[i + 1] : hull[i + 1];
+    const lx = (u - 0.5) * w;
+    const ly = (v - 0.5) * h;
+    out.push(Math.round(cx + lx * cos - ly * sin), Math.round(cy + lx * sin + ly * cos));
+  }
+  return out;
+}
+
 /** Wandelt ein Zeichnungs-Dokument (Rechteck, Ellipse, Polygon, Freihand) in ein Polygon um. */
 export function drawingToPolygon(d) {
   const s = d.shape ?? {};
@@ -368,9 +390,9 @@ export function planForest(dims, cfg, assets, drawings = []) {
       if (trees.some((t) => Math.hypot(t.x - x, t.y - y) < Math.max(t.trunkSize, g) / 2 + reach * 0.6)) continue;
       if (logs.some((l) => Math.hypot(l.x - x, l.y - y) < (l.reach + reach) * 0.8)) continue;
       const rotation = Math.round(rng.float(0, 360));
-      // Fußabdruck für schwieriges Gelände: etwas kleiner als das Bild, das transparente Ränder hat
-      const pts = rotatePoints([x - w * 0.4, y - h * 0.35, x + w * 0.4, y - h * 0.35, x + w * 0.4, y + h * 0.35, x - w * 0.4, y + h * 0.35], x, y, rotation);
-      logs.push({ x, y, w, h, rotation, reach, src: file.src, pts: pts.map(Math.round) });
+      // Umriss aus den sichtbaren Pixeln des Bildes (Hitbox), sonst ein Rechteck mit Rand
+      const hull = file.hull ?? DEFAULT_HULL;
+      logs.push({ x, y, w, h, rotation, reach, src: file.src, hull, pts: hullToWorld(hull, x, y, w, h, rotation) });
     }
   }
 

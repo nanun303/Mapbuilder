@@ -1,6 +1,7 @@
 import { MODULE_ID } from "./config.js";
 import { loadAssets } from "./assets.js";
 import { planForest } from "./generator.js";
+import { rebuildCoverWalls } from "./cover.js";
 
 const CHUNK = 500;
 
@@ -149,7 +150,8 @@ export function buildDocuments(plan, cfg, dims) {
 
   // Totholz
   for (const l of plan.logs) {
-    tiles.push(tileData(l.src, l.x, l.y, l.w, l.h, l.rotation, "log", 2, cfg, { flags: shadow }));
+    const cover = cfg.logCover ? { cover: { hull: l.hull, dc: cfg.logClimbDC, blockSight: false, outline: "auto", src: l.src } } : {};
+    tiles.push(tileData(l.src, l.x, l.y, l.w, l.h, l.rotation, "log", 2, cfg, { flags: { ...shadow, [MODULE_ID]: cover } }));
   }
 
   // Bäume
@@ -182,7 +184,6 @@ export function buildDocuments(plan, cfg, dims) {
   // Regionen (schwieriges Gelände)
   const regions = [];
   const areas = cfg.undergrowth === "patches" ? plan.patches.map((p) => p.pts) : cfg.undergrowth === "everywhere" ? [plan.rectPts] : [];
-  if (cfg.logDifficult && cfg.undergrowth !== "everywhere") areas.push(...plan.logs.map((l) => l.pts));
   if (areas.length) {
     const behavior = difficultBehavior(cfg.difficulty);
     const shapes = areas.map((points) => ({ type: "polygon", points, hole: false }));
@@ -205,18 +206,20 @@ export function buildDocuments(plan, cfg, dims) {
 /*  Erzeugen und Entfernen                      */
 /* -------------------------------------------- */
 
-export async function createChunked(scene, type, data, label) {
+export async function createChunked(scene, type, data, label, options = {}) {
+  const created = [];
   for (let i = 0; i < data.length; i += CHUNK) {
     ui.notifications.info(`Waldgenerator: ${label} ${i + 1}–${Math.min(i + CHUNK, data.length)} von ${data.length} …`);
-    await scene.createEmbeddedDocuments(type, data.slice(i, i + CHUNK));
+    created.push(...(await scene.createEmbeddedDocuments(type, data.slice(i, i + CHUNK), options)));
   }
+  return created;
 }
 
 export async function removeGenerated(scene) {
   let total = 0;
   for (const type of ["Tile", "Wall", "Region"]) {
     const ids = scene.getEmbeddedCollection(type).filter((d) => d.getFlag(MODULE_ID, "generated")).map((d) => d.id);
-    for (let i = 0; i < ids.length; i += CHUNK) await scene.deleteEmbeddedDocuments(type, ids.slice(i, i + CHUNK));
+    for (let i = 0; i < ids.length; i += CHUNK) await scene.deleteEmbeddedDocuments(type, ids.slice(i, i + CHUNK), { kmwBulk: true });
     total += ids.length;
   }
   return total;
@@ -225,7 +228,10 @@ export async function removeGenerated(scene) {
 export async function applyPlan(scene, plan, cfg) {
   if (cfg.replaceExisting) await removeGenerated(scene);
   const { tiles, walls, regions } = plan.docs;
-  await createChunked(scene, "Tile", tiles, "Tiles");
+  // Cover-Wände fürs Totholz gesammelt anlegen statt einzeln über den createTile-Hook
+  const created = await createChunked(scene, "Tile", tiles, "Tiles", { kmwCover: true });
+  const coverTiles = created.filter((t) => t.getFlag(MODULE_ID, "cover"));
+  if (coverTiles.length) await rebuildCoverWalls(scene, coverTiles, { generated: true });
   if (walls.length) await createChunked(scene, "Wall", walls, "Wände");
   if (regions.length) await scene.createEmbeddedDocuments("Region", regions);
 }

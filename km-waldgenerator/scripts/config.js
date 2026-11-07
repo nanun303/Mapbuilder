@@ -70,7 +70,8 @@ export const DEFAULTS = {
   logFilter: "",
   logDensity: 1.5,
   logScale: 1,
-  logDifficult: true,
+  logCover: true,
+  logClimbDC: 10,
 
   // Unterholz
   undergrowth: "patches",
@@ -92,7 +93,7 @@ export const DEFAULTS = {
 const NUMBERS = [
   "widthF", "heightF", "gridPx", "padding", "minDist", "density", "clumping", "edgeMargin", "clearings",
   "clearingMin", "clearingMax", "paths", "pathWidth", "occlusionAlpha", "crownElevation", "trunkRatio",
-  "wallMinSize", "wallSides", "logDensity", "logScale", "patchCount", "patchMin", "patchMax", "difficulty",
+  "wallMinSize", "wallSides", "logDensity", "logScale", "logClimbDC", "patchCount", "patchMin", "patchMax", "difficulty",
   "bushDensity", "bushSize", "groundTileSize"
 ];
 
