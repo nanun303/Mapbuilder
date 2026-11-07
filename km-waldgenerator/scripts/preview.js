@@ -58,8 +58,11 @@ export function drawPreview(plan, cfg) {
     strokePolygon(g, ex.pts, 0xff4040, 0.8, lw);
   }
   for (const b of plan.bushes) fillCircle(g, b.x, b.y, b.w / 2, 0x9acd32, 0.5);
+  for (const l of plan.logs) fillPolygon(g, l.pts, 0x8b5a2b, 0.9);
   if (cfg.crownMode !== "trunks") for (const t of plan.trees) fillCircle(g, t.x, t.y, t.size / 2, 0x2e8b57, 0.35);
-  for (const t of plan.trees) fillCircle(g, t.x, t.y, Math.max(canvas.dimensions.size * 0.2, (t.size * cfg.trunkRatio) / 2), 0x5b3a1a, 0.9);
+  for (const t of plan.trees) {
+    if (t.trunk) fillCircle(g, t.x, t.y, t.trunkSize * 0.22, 0x5b3a1a, 0.9);
+  }
   for (const w of plan.walls) strokeLine(g, w, 0xff00ff, 0.9, lw / 2);
 
   const layer = canvas.controls ?? canvas.interface ?? canvas.stage;

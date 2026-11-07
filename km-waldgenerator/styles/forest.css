@@ -29,19 +29,30 @@
   text-align: right;
 }
 
-.km-wald .kmw-species {
+.km-wald .kmw-row {
   display: grid;
-  grid-template-columns: 1fr 2rem 3.5rem 3.5rem 3.5rem 3.5rem 2rem;
   gap: 0.25rem;
   align-items: center;
   margin-bottom: 0.25rem;
 }
 
-.km-wald .kmw-species input {
+.km-wald .kmw-row-crown {
+  grid-template-columns: 1fr 2rem 7rem 3.2rem 3.2rem 3.2rem 3.2rem 2rem;
+}
+
+.km-wald .kmw-row-trunk {
+  grid-template-columns: 1fr 2rem 9rem 3.2rem 2rem;
+}
+
+.km-wald .kmw-row input {
   width: 100%;
 }
 
-.km-wald .kmw-species-head {
+.km-wald .form-fields input.kmw-filter {
+  flex: 0 0 7rem;
+}
+
+.km-wald .kmw-row-head {
   font-size: var(--font-size-11, 11px);
   opacity: 0.75;
 }

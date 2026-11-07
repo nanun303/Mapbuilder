@@ -293,7 +293,7 @@ function inAnyArea(x, y, areas, pad) {
 /**
  * @param {object} dims       Szenenmaße (sceneX, sceneY, sceneWidth, sceneHeight, size)
  * @param {object} cfg        Einstellungen aus dem Fenster
- * @param {object} assets     { species: [{...speciesCfg, entries: []}], bushes: [] }
+ * @param {object} assets     { crowns: [{weight, baseSize, scaleMin, scaleMax, files}], trunks: [{weight, files}], logs: [], bushes: [] }
  * @param {object[]} drawings Zeichnungen der Szene (für Freiflächen)
  */
 export function planForest(dims, cfg, assets, drawings = []) {
@@ -320,10 +320,9 @@ export function planForest(dims, cfg, assets, drawings = []) {
     exclusions.push(makeArea("path", pathPolygon(rect, cfg.pathWidth * g, g, rng)));
   }
 
-  // Bäume
-  const species = assets.species.filter((s) => s.entries.length && s.weight > 0);
+  // Bäume: Krone aus einem Kronen-Set, Stamm aus einem Stamm-Set (beides nach Gewicht gewählt)
   const trees = [];
-  if (species.length) {
+  if (assets.crowns.length) {
     const margin = Math.max(0, cfg.edgeMargin) * g;
     const pts = poissonDisc(rect.x + margin, rect.y + margin, rect.w - 2 * margin, rect.h - 2 * margin, cfg.minDist * g, rng);
     const density = cfg.density / 100;
@@ -334,13 +333,44 @@ export function planForest(dims, cfg, assets, drawings = []) {
       const keep = density * ((1 - clump) + clump * 2 * smoothstep(0.3, 0.7, n));
       if (rng.next() > keep) continue;
       if (inAnyArea(x, y, exclusions, g * 0.5)) continue;
-      const sp = rng.weighted(species, (s) => s.weight);
-      const entry = rng.pick(sp.entries);
-      const scale = rng.float(sp.scaleMin, Math.max(sp.scaleMin, sp.scaleMax));
-      const w = (entry.sx ?? sp.baseSize) * scale * g;
-      const h = (entry.sy ?? entry.sx ?? sp.baseSize) * scale * g;
+      const set = rng.weighted(assets.crowns, (s) => s.weight);
+      const crown = rng.pick(set.files);
+      const scale = rng.float(set.scaleMin, Math.max(set.scaleMin, set.scaleMax));
+      const w = (crown.sx ?? set.baseSize) * scale * g;
+      const h = (crown.sy ?? crown.sx ?? set.baseSize) * scale * g;
+      const size = Math.max(w, h);
       const rotation = cfg.randomRotation ? Math.round(rng.float(0, 360)) : 0;
-      trees.push({ x, y, w, h, rotation, entry, size: Math.max(w, h) });
+      const tree = { x, y, w, h, rotation, size, crown: crown.src, trunk: null, trunkSize: 0, trunkRotation: 0 };
+      if (assets.trunks.length) {
+        tree.trunk = rng.pick(rng.weighted(assets.trunks, (s) => s.weight).files).src;
+        tree.trunkSize = Math.max(g * 1.2, size * cfg.trunkRatio);
+        tree.trunkRotation = Math.round(rng.float(0, 360));
+      }
+      trees.push(tree);
+    }
+  }
+
+  // Totholz: liegende Stämme zwischen den Bäumen
+  const logs = [];
+  if (assets.logs?.length && cfg.logDensity > 0) {
+    const target = Math.round((cfg.logDensity * (rect.w / g) * (rect.h / g)) / 100);
+    for (let attempt = 0; logs.length < target && attempt < target * 20; attempt++) {
+      const file = rng.pick(assets.logs);
+      const scale = cfg.logScale * rng.float(0.9, 1.1);
+      const w = (file.sx ?? 3) * scale * g;
+      const h = (file.sy ?? 1) * scale * g;
+      const x = rect.x + rng.next() * rect.w;
+      const y = rect.y + rng.next() * rect.h;
+      const reach = Math.max(w, h) / 2;
+      if (x - reach < rect.x || y - reach < rect.y || x + reach > rect.x + rect.w || y + reach > rect.y + rect.h) continue;
+      if (inAnyArea(x, y, exclusions, reach * 0.5)) continue;
+      // nicht auf einen Stamm und nicht auf anderes Totholz legen
+      if (trees.some((t) => Math.hypot(t.x - x, t.y - y) < Math.max(t.trunkSize, g) / 2 + reach * 0.6)) continue;
+      if (logs.some((l) => Math.hypot(l.x - x, l.y - y) < (l.reach + reach) * 0.8)) continue;
+      const rotation = Math.round(rng.float(0, 360));
+      // Fußabdruck für schwieriges Gelände: etwas kleiner als das Bild, das transparente Ränder hat
+      const pts = rotatePoints([x - w * 0.4, y - h * 0.35, x + w * 0.4, y - h * 0.35, x + w * 0.4, y + h * 0.35, x - w * 0.4, y + h * 0.35], x, y, rotation);
+      logs.push({ x, y, w, h, rotation, reach, src: file.src, pts: pts.map(Math.round) });
     }
   }
 
@@ -378,7 +408,8 @@ export function planForest(dims, cfg, assets, drawings = []) {
     const sides = Math.max(3, Math.round(cfg.wallSides));
     for (const t of trees) {
       if (t.size < cfg.wallMinSize * g) continue;
-      const r = Math.max(g * 0.15, (t.size * cfg.trunkRatio) / 2 * 0.85);
+      // Der eigentliche Stamm füllt etwa die Hälfte des Stamm-Bildes, der Rest sind Wurzeln
+      const r = Math.max(g * 0.15, (t.trunkSize || t.size * cfg.trunkRatio) * 0.22);
       const off = rng.next() * Math.PI * 2;
       const pts = [];
       for (let i = 0; i < sides; i++) {
@@ -393,5 +424,5 @@ export function planForest(dims, cfg, assets, drawings = []) {
     }
   }
 
-  return { rect, rectPts, exclusions, trees, patches, bushes, walls };
+  return { rect, rectPts, exclusions, trees, logs, patches, bushes, walls };
 }

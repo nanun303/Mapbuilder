@@ -5,20 +5,19 @@ const IMAGE_RX = /\.(webp|png|jpe?g|svg|avif|gif)$/i;
 const SIZE_RX = /[_\-\s](\d+(?:\.\d+)?)x(\d+(?:\.\d+)?)(?=[_\-\s.]|$)/gi;
 
 /** Eingebaute Platzhalter, damit das Modul ohne eigene Grafiken testbar ist. */
-export const BUILTIN = {
+const BUILTIN = {
   "builtin:laub": [
-    { crown: `${ASSET_DIR}laub-krone.svg`, trunk: `${ASSET_DIR}stamm.svg`, placeholderTrunk: true, sx: 4, sy: 4 },
-    { crown: `${ASSET_DIR}laub-krone-herbst.svg`, trunk: `${ASSET_DIR}stamm.svg`, placeholderTrunk: true, sx: 4, sy: 4 }
+    { src: `${ASSET_DIR}laub-krone.svg`, sx: 4, sy: 4 },
+    { src: `${ASSET_DIR}laub-krone-herbst.svg`, sx: 4, sy: 4 }
   ],
-  "builtin:nadel": [
-    { crown: `${ASSET_DIR}nadel-krone.svg`, trunk: `${ASSET_DIR}stamm.svg`, placeholderTrunk: true, sx: 3, sy: 3 }
-  ]
+  "builtin:nadel": [{ src: `${ASSET_DIR}nadel-krone.svg`, sx: 3, sy: 3 }],
+  "builtin:stamm": [{ src: `${ASSET_DIR}stamm.svg` }],
+  "builtin:busch": [{ src: `${ASSET_DIR}busch.svg` }]
 };
-export const PLACEHOLDER_TRUNK = `${ASSET_DIR}stamm.svg`;
-export const PLACEHOLDER_BUSH = `${ASSET_DIR}busch.svg`;
+export const BUILTIN_NAMES = Object.keys(BUILTIN);
 
 /* -------------------------------------------- */
-/*  Ordner durchsuchen (lokal und The Forge)    */
+/*  Ordner lesen (lokal und The Forge)          */
 /* -------------------------------------------- */
 
 function filePicker() {
@@ -46,140 +45,123 @@ async function browse(path) {
   }
 }
 
-/** Liefert alle Bilddateien eines Ordners inkl. Unterordnern (sortiert, damit der Seed reproduzierbar bleibt). */
-export async function scanFolder(path, maxDepth = 6) {
-  const files = [];
-  const seen = new Set();
-  const queue = [[path.replace(/\/+$/, ""), 0]];
-  while (queue.length) {
-    const [dir, depth] = queue.shift();
-    if (seen.has(dir)) continue;
-    seen.add(dir);
-    const result = await browse(dir);
-    for (const f of result.files ?? []) if (IMAGE_RX.test(f.split("?")[0])) files.push(f);
-    if (depth < maxDepth) for (const d of result.dirs ?? []) queue.push([d, depth + 1]);
-  }
-  return files.sort();
+/** Bilddateien eines Ordners, ohne Unterordner, sortiert (damit der Seed reproduzierbar bleibt). */
+async function listImages(path) {
+  const result = await browse(path.replace(/\/+$/, ""));
+  return (result.files ?? []).filter((f) => IMAGE_RX.test(f.split("?")[0])).sort();
 }
 
 /* -------------------------------------------- */
-/*  Dateinamen auswerten                        */
+/*  Dateinamen                                  */
 /* -------------------------------------------- */
 
-function baseName(src) {
+function fileName(src) {
   const clean = decodeURIComponent(src.split("?")[0]);
-  return clean.substring(clean.lastIndexOf("/") + 1).replace(IMAGE_RX, "");
+  return clean.substring(clean.lastIndexOf("/") + 1);
 }
 
-/** Liest die Feldgröße aus FA-Dateinamen wie "Tree_Oak_A1_6x6.webp". */
+/** Liest die Feldgröße aus FA-Dateinamen wie "Tree_Green_A1_6x6.webp". */
 export function parseSize(src) {
-  const matches = [...baseName(src).matchAll(SIZE_RX)];
+  const matches = [...fileName(src).replace(IMAGE_RX, "").matchAll(SIZE_RX)];
   if (!matches.length) return {};
   const m = matches[matches.length - 1];
   return { sx: Number(m[1]), sy: Number(m[2]) };
 }
 
-function wordRegex(words) {
-  const list = String(words ?? "")
-    .split(",")
-    .map((w) => w.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
-    .filter(Boolean);
-  if (!list.length) return null;
-  return new RegExp(`(^|[_\\-\\s])(${list.join("|")})(?=$|[_\\-\\s\\d])`, "i");
-}
-
-function pairKey(name, rxs) {
-  let key = name.toLowerCase().replace(SIZE_RX, "");
-  for (const rx of rxs) if (rx) key = key.replace(new RegExp(rx.source, "gi"), "$1");
-  return key.replace(/[_\-\s]+/g, "_").replace(/^_|_$/g, "");
-}
-
 /**
- * Ordnet Kronen- und Stamm-Bilder einander zu. Bilder ohne Stichwort gelten als ganze Bäume
- * und werden als Krone verwendet.
- * @returns {{crown: string|null, trunk: string|null, placeholderTrunk: boolean, sx?: number, sy?: number}[]}
+ * Baut aus "Stump_Ashen_B*, Stump_Dark_B*" einen Test für Dateinamen.
+ * "*" steht für beliebig viele Zeichen, "?" für genau eins. Leer = alles.
  */
-export function pairTreeFiles(files, crownWords, trunkWords) {
-  const crownRx = wordRegex(crownWords);
-  const trunkRx = wordRegex(trunkWords);
-  const groups = new Map();
-  for (const src of files) {
-    const name = baseName(src);
-    const role = crownRx?.test(name) ? "crown" : trunkRx?.test(name) ? "trunk" : "full";
-    const key = pairKey(name, [crownRx, trunkRx]);
-    if (!groups.has(key)) groups.set(key, { crown: [], trunk: [], full: [] });
-    groups.get(key)[role].push(src);
-  }
-
-  const entries = [];
-  for (const g of groups.values()) {
-    g.crown.forEach((crown, i) => {
-      const trunk = g.trunk.length ? g.trunk[i % g.trunk.length] : null;
-      entries.push({ crown, trunk, placeholderTrunk: false, ...parseSize(crown) });
-    });
-    if (!g.crown.length) for (const trunk of g.trunk) entries.push({ crown: null, trunk, placeholderTrunk: false, ...parseSize(trunk) });
-    for (const full of g.full) entries.push({ crown: full, trunk: null, placeholderTrunk: false, ...parseSize(full) });
-  }
-  return entries;
+export function filterMatcher(filter) {
+  const patterns = String(filter ?? "")
+    .split(",")
+    .map((p) => p.trim())
+    .filter(Boolean);
+  if (!patterns.length) return () => true;
+  const rxs = patterns.map((p) => {
+    const body = p.replace(/[.+^${}()|[\]\\]/g, "\\$&").replace(/\*/g, ".*").replace(/\?/g, ".");
+    return new RegExp(`^${body}$`, "i");
+  });
+  return (src) => {
+    const name = fileName(src);
+    const stem = name.replace(IMAGE_RX, "");
+    return rxs.some((rx) => rx.test(name) || rx.test(stem));
+  };
 }
 
 /* -------------------------------------------- */
-/*  Alles laden                                 */
+/*  Laden                                       */
 /* -------------------------------------------- */
 
+/** Liest Ordner und merkt sich das Ergebnis, damit z.B. der Stumps-Ordner nur einmal gelesen wird. */
+class FolderCache {
+  #folders = new Map();
+
+  constructor(warnings) {
+    this.warnings = warnings;
+  }
+
+  /** @returns {Promise<{src: string, sx?: number, sy?: number}[]>} */
+  async files(folder, filter) {
+    folder = String(folder ?? "").trim();
+    if (!folder) return [];
+    if (BUILTIN[folder]) return BUILTIN[folder].map((e) => ({ ...e }));
+    if (!this.#folders.has(folder)) {
+      this.#folders.set(
+        folder,
+        listImages(folder).catch((err) => {
+          console.error(`${MODULE_ID} | Ordner konnte nicht gelesen werden: ${folder}`, err);
+          this.warnings.push(`Ordner nicht lesbar: ${folder}`);
+          return [];
+        })
+      );
+    }
+    const match = filterMatcher(filter);
+    const files = (await this.#folders.get(folder)).filter(match).map((src) => ({ src, ...parseSize(src) }));
+    if (!files.length) this.warnings.push(`Keine Bilder gefunden: ${folder}${filter ? ` (Filter: ${filter})` : ""}`);
+    return files;
+  }
+}
+
+async function loadSets(cache, sets) {
+  const out = [];
+  for (const set of sets) {
+    if (!set.folder || set.weight <= 0) continue;
+    const files = await cache.files(set.folder, set.filter);
+    if (files.length) out.push({ ...set, files });
+  }
+  return out;
+}
+
 /**
- * Lädt alle Baumarten und Büsche gemäß Einstellungen.
- * @returns {Promise<{species: object[], bushes: object[], warnings: string[]}>}
+ * Lädt alle Bilder gemäß Einstellungen.
+ * @returns {Promise<{crowns: object[], trunks: object[], logs: object[], bushes: object[], warnings: string[]}>}
  */
 export async function loadAssets(cfg) {
   const warnings = [];
-  const species = [];
-  for (const sp of cfg.species) {
-    const folder = String(sp.folder ?? "").trim();
-    let entries = [];
-    if (!folder) continue;
-    if (BUILTIN[folder]) entries = BUILTIN[folder].map((e) => ({ ...e }));
-    else {
-      try {
-        entries = pairTreeFiles(await scanFolder(folder), cfg.crownWords, cfg.trunkWords);
-      } catch (err) {
-        console.error(`${MODULE_ID} | Ordner konnte nicht gelesen werden: ${folder}`, err);
-        warnings.push(`Ordner nicht lesbar: ${folder}`);
-      }
-    }
-    entries = usableEntries(entries, cfg);
-    if (!entries.length) warnings.push(`Keine passenden Bilder in: ${folder}`);
-    species.push({ ...sp, entries });
+  const cache = new FolderCache(warnings);
+
+  let crowns = await loadSets(cache, cfg.crowns);
+  // Im Modus "nur Stämme" bestimmen die Kronen nur die Baumgröße; ohne Kronen-Ordner reicht eine Standardgröße
+  if (!crowns.length && cfg.crownMode === "trunks") {
+    crowns = [{ weight: 1, baseSize: 5, scaleMin: 0.8, scaleMax: 1.2, files: [{ src: null }] }];
   }
+
+  let trunks = [];
+  if (cfg.crownMode !== "flat") {
+    trunks = await loadSets(cache, cfg.trunks);
+    if (!trunks.length && (cfg.placeholderTrunks || cfg.crownMode === "trunks")) {
+      trunks = [{ weight: 1, files: BUILTIN["builtin:stamm"] }];
+    }
+  }
+
+  const logs = cfg.logDensity > 0 ? await cache.files(cfg.logFolder, cfg.logFilter) : [];
 
   let bushes = [];
-  if (cfg.undergrowth !== "none") {
-    const folder = String(cfg.bushFolder ?? "").trim();
-    if (folder) {
-      try {
-        bushes = (await scanFolder(folder)).map((src) => ({ src, ...parseSize(src) }));
-      } catch (err) {
-        console.error(`${MODULE_ID} | Busch-Ordner konnte nicht gelesen werden: ${folder}`, err);
-        warnings.push(`Busch-Ordner nicht lesbar: ${folder}`);
-      }
-    }
-    if (!bushes.length) bushes = [{ src: PLACEHOLDER_BUSH }];
+  if (cfg.undergrowth !== "none" && cfg.bushDensity > 0) {
+    bushes = await cache.files(cfg.bushFolder, cfg.bushFilter);
+    if (!bushes.length) bushes = BUILTIN["builtin:busch"].map((e) => ({ ...e }));
   }
-  return { species, bushes, warnings };
-}
 
-/** Filtert Einträge, die im gewählten Kronen-Modus nutzbar sind, und ergänzt Platzhalter-Stämme. */
-function usableEntries(entries, cfg) {
-  const out = [];
-  for (const e of entries) {
-    if (cfg.crownMode === "trunks") {
-      if (e.trunk) out.push(e);
-      else out.push({ ...e, trunk: PLACEHOLDER_TRUNK, placeholderTrunk: true });
-      continue;
-    }
-    if (!e.crown) continue;
-    if (!e.trunk && cfg.placeholderTrunks) out.push({ ...e, trunk: PLACEHOLDER_TRUNK, placeholderTrunk: true });
-    else out.push(e);
-  }
-  return out;
+  return { crowns, trunks, logs, bushes, warnings };
 }

@@ -138,31 +138,23 @@ export function buildDocuments(plan, cfg, dims) {
     tiles.push(tileData(b.src, b.x, b.y, b.w, b.h, b.rotation, "bush", 1, cfg, { flags: shadow }));
   }
 
+  // Totholz
+  for (const l of plan.logs) {
+    tiles.push(tileData(l.src, l.x, l.y, l.w, l.h, l.rotation, "log", 2, cfg, { flags: shadow }));
+  }
+
   // Bäume
   const occlusion = occlusionData(cfg);
-  const pushTrunk = (t) => {
-    const e = t.entry;
-    if (!e.trunk) return;
-    if (e.placeholderTrunk) {
-      const s = Math.max(g * 0.4, t.size * cfg.trunkRatio);
-      tiles.push(tileData(e.trunk, t.x, t.y, s, s, t.rotation, "trunk", 2, cfg));
-    } else {
-      // Paarweise Assets (z.B. FA) sind deckungsgleich: Stamm bekommt dasselbe Rechteck wie die Krone
-      tiles.push(tileData(e.trunk, t.x, t.y, t.w, t.h, t.rotation, "trunk", 2, cfg));
-    }
-  };
   plan.trees.forEach((t, i) => {
+    if (t.trunk) tiles.push(tileData(t.trunk, t.x, t.y, t.trunkSize, t.trunkSize, t.trunkRotation, "trunk", 3, cfg));
     if (cfg.crownMode === "overhead") {
-      tiles.push(tileData(t.entry.crown, t.x, t.y, t.w, t.h, t.rotation, "crown", 10 + i, cfg, {
+      tiles.push(tileData(t.crown, t.x, t.y, t.w, t.h, t.rotation, "crown", 10 + i, cfg, {
         elevation: cfg.crownElevation,
         occlusion,
         flags: shadow
       }));
-      pushTrunk(t);
-    } else if (cfg.crownMode === "trunks") {
-      pushTrunk(t);
-    } else {
-      tiles.push(tileData(t.entry.crown, t.x, t.y, t.w, t.h, t.rotation, "tree", 10 + i, cfg, { flags: shadow }));
+    } else if (cfg.crownMode === "flat") {
+      tiles.push(tileData(t.crown, t.x, t.y, t.w, t.h, t.rotation, "tree", 10 + i, cfg, { flags: shadow }));
     }
   });
 
@@ -181,6 +173,7 @@ export function buildDocuments(plan, cfg, dims) {
   // Regionen (schwieriges Gelände)
   const regions = [];
   const areas = cfg.undergrowth === "patches" ? plan.patches.map((p) => p.pts) : cfg.undergrowth === "everywhere" ? [plan.rectPts] : [];
+  if (cfg.logDifficult && cfg.undergrowth !== "everywhere") areas.push(...plan.logs.map((l) => l.pts));
   if (areas.length) {
     const behavior = difficultBehavior(cfg.difficulty);
     const shapes = areas.map((points) => ({ type: "polygon", points, hole: false }));

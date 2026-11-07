@@ -1,6 +1,12 @@
 import { MODULE_ID, DEFAULTS, normalizeConfig } from "./config.js";
 import { applyPlan, createChunked, createScene, groundTileData, preparePlan, removeGenerated, sceneDimensions } from "./builder.js";
 import { clearPreview, drawPreview } from "./preview.js";
+import { BUILTIN_NAMES } from "./assets.js";
+
+const NEW_ROWS = {
+  crowns: { folder: "", filter: "", weight: 1, baseSize: 5, scaleMin: 0.9, scaleMax: 1.1 },
+  trunks: { folder: "", filter: "", weight: 1 }
+};
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 
@@ -22,8 +28,8 @@ export class ForestGeneratorApp extends HandlebarsApplicationMixin(ApplicationV2
     position: { width: 640, height: 820 },
     form: { handler: ForestGeneratorApp.#onSubmit, submitOnChange: false, closeOnSubmit: false },
     actions: {
-      addSpecies: ForestGeneratorApp.#onAddSpecies,
-      removeSpecies: ForestGeneratorApp.#onRemoveSpecies,
+      addRow: ForestGeneratorApp.#onAddRow,
+      removeRow: ForestGeneratorApp.#onRemoveRow,
       browse: ForestGeneratorApp.#onBrowse,
       rollSeed: ForestGeneratorApp.#onRollSeed,
       preview: ForestGeneratorApp.#onPreview,
@@ -43,7 +49,9 @@ export class ForestGeneratorApp extends HandlebarsApplicationMixin(ApplicationV2
     const cfg = this.config;
     return {
       cfg,
-      species: cfg.species.map((s, index) => ({ ...s, index })),
+      crowns: cfg.crowns.map((s, index) => ({ ...s, index })),
+      trunks: cfg.trunks.map((s, index) => ({ ...s, index })),
+      builtins: BUILTIN_NAMES.join(", "),
       sceneName: canvas.scene?.name ?? "–",
       faActive: !!game.modules.get("fa-nexus")?.active,
       targets: { new: "Neue Szene erstellen", current: "In aktuelle Szene einfügen" },
@@ -78,6 +86,9 @@ export class ForestGeneratorApp extends HandlebarsApplicationMixin(ApplicationV2
   async #readForm() {
     const FDE = foundry.applications.ux?.FormDataExtended ?? globalThis.FormDataExtended;
     const data = foundry.utils.expandObject(new FDE(this.element).object);
+    // Leere Tabellen erscheinen nicht im Formular, sollen aber leer bleiben statt auf Standard zurückzufallen
+    data.crowns ??= [];
+    data.trunks ??= [];
     this.config = normalizeConfig(data);
     await game.settings.set(MODULE_ID, "config", this.config);
     return this.config;
@@ -118,7 +129,7 @@ export class ForestGeneratorApp extends HandlebarsApplicationMixin(ApplicationV2
 
   static #summary(plan) {
     const { tiles, walls, regions } = plan.docs;
-    return `${plan.trees.length} Bäume, ${plan.bushes.length} Büsche → ${tiles.length} Tiles, ${walls.length} Wände, ${regions.length} Regionen`;
+    return `${plan.trees.length} Bäume, ${plan.logs.length} Totholz, ${plan.bushes.length} Büsche → ${tiles.length} Tiles, ${walls.length} Wände, ${regions.length} Regionen`;
   }
 
   /* -------------------------------------------- */
@@ -213,15 +224,16 @@ export class ForestGeneratorApp extends HandlebarsApplicationMixin(ApplicationV2
     });
   }
 
-  static async #onAddSpecies() {
+  static async #onAddRow(event, target) {
+    const list = target.dataset.list;
     await this.#readForm();
-    this.config.species.push({ folder: "", weight: 1, baseSize: 4, scaleMin: 0.8, scaleMax: 1.2 });
+    this.config[list].push({ ...NEW_ROWS[list] });
     await this.render();
   }
 
-  static async #onRemoveSpecies(event, target) {
+  static async #onRemoveRow(event, target) {
     await this.#readForm();
-    this.config.species.splice(Number(target.dataset.index), 1);
+    this.config[target.dataset.list].splice(Number(target.dataset.index), 1);
     await this.render();
   }
 

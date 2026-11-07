@@ -6,8 +6,11 @@ Foundry-VTT-Modul (v13/v14) zum Erzeugen großer Wald-Battlemaps. Alle Bäume si
 
 - Bäume per Poisson-Verteilung mit natürlicher Gruppierung, reproduzierbar über einen Seed
 - Kronen-Modi: Kronen über Tokens (blenden aus, wenn ein Token darunter steht), nur Stämme, oder ganze Bäume flach am Boden
-- Mehrere Baumarten mit Gewichtung, Größe aus FA-Dateinamen (`_4x4`)
-- Automatische Paarung von Kronen- und Stamm-Bildern über Stichwörter
+- Kronen und Stämme aus getrennten Ordnern, je mit Dateifilter (`Stump_Ashen_B*`) und Gewichtung
+- Standardmäßig auf FA-Nexus-Assets eingestellt (`fa-nexus-assets/Woodlands/!Wilderness/Flora/...`):
+  alle Bäume als Kronen, Stümpfe Ashen/Dark/Light nur in Version B
+- Größe aus FA-Dateinamen (`_6x6`), Stammgröße relativ zur Krone
+- Totholz (liegende Stämme), optional als schwieriges Gelände
 - Freiflächen: Zeichnungen der Szene, zufällige Lichtungen und Wege
 - Wände um dicke Stämme (Bewegung und/oder Sicht)
 - Unterholz mit Büschen und PF2e-Region für (größeres) schwieriges Gelände

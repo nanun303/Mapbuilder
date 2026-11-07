@@ -35,39 +35,50 @@
   </fieldset>
 
   <fieldset>
-    <legend>Baumarten</legend>
+    <legend>Kronen</legend>
     <p class="hint">
-      Ordner mit Baumbildern (Unterordner werden mitgelesen), z. B. ein Unterordner von <code>fa-nexus-assets</code>.
-      Eingebaute Platzhalter: <code>builtin:laub</code>, <code>builtin:nadel</code>.
+      Ordner werden ohne Unterordner gelesen. Filter: <code>*</code> = beliebige Zeichen, mehrere mit Komma trennen, leer = alle Bilder.
+      Größe in Feldern stammt aus dem Dateinamen (<code>_6x6</code>), sonst aus „Größe“.
     </p>
-    <div class="kmw-species kmw-species-head">
-      <span>Ordner</span><span></span><span>Gewicht</span><span>Größe</span><span>Skala min</span><span>Skala max</span><span></span>
+    <div class="kmw-row kmw-row-crown kmw-row-head">
+      <span>Ordner</span><span></span><span>Filter</span><span>Gewicht</span><span>Größe</span><span>Skala min</span><span>Skala max</span><span></span>
     </div>
-    {{#each species}}
-    <div class="kmw-species">
-      <input type="text" name="species.{{index}}.folder" value="{{folder}}" placeholder="Ordner">
-      <button type="button" class="icon" data-action="browse" data-target="species.{{index}}.folder" data-type="folder" data-tooltip="Ordner wählen"><i class="fa-solid fa-folder-open"></i></button>
-      <input type="number" name="species.{{index}}.weight" value="{{weight}}" min="0" step="1" data-tooltip="Wie häufig diese Art vorkommt">
-      <input type="number" name="species.{{index}}.baseSize" value="{{baseSize}}" min="0.5" step="0.5" data-tooltip="Größe in Feldern, falls der Dateiname keine enthält (FA: _4x4)">
-      <input type="number" name="species.{{index}}.scaleMin" value="{{scaleMin}}" min="0.1" step="0.05">
-      <input type="number" name="species.{{index}}.scaleMax" value="{{scaleMax}}" min="0.1" step="0.05">
-      <button type="button" class="icon" data-action="removeSpecies" data-index="{{index}}" data-tooltip="Entfernen"><i class="fa-solid fa-trash"></i></button>
+    {{#each crowns}}
+    <div class="kmw-row kmw-row-crown">
+      <input type="text" name="crowns.{{index}}.folder" value="{{folder}}" placeholder="Ordner">
+      <button type="button" class="icon" data-action="browse" data-target="crowns.{{index}}.folder" data-type="folder" data-tooltip="Ordner wählen"><i class="fa-solid fa-folder-open"></i></button>
+      <input type="text" name="crowns.{{index}}.filter" value="{{filter}}" placeholder="alle">
+      <input type="number" name="crowns.{{index}}.weight" value="{{weight}}" min="0" step="1" data-tooltip="Wie häufig diese Zeile gewählt wird">
+      <input type="number" name="crowns.{{index}}.baseSize" value="{{baseSize}}" min="0.5" step="0.5" data-tooltip="Größe in Feldern, falls der Dateiname keine enthält">
+      <input type="number" name="crowns.{{index}}.scaleMin" value="{{scaleMin}}" min="0.1" step="0.05">
+      <input type="number" name="crowns.{{index}}.scaleMax" value="{{scaleMax}}" min="0.1" step="0.05">
+      <button type="button" class="icon" data-action="removeRow" data-list="crowns" data-index="{{index}}" data-tooltip="Entfernen"><i class="fa-solid fa-trash"></i></button>
     </div>
     {{/each}}
-    <button type="button" data-action="addSpecies"><i class="fa-solid fa-plus"></i> Baumart hinzufügen</button>
+    <button type="button" data-action="addRow" data-list="crowns"><i class="fa-solid fa-plus"></i> Kronen-Zeile hinzufügen</button>
+  </fieldset>
 
-    <details>
-      <summary>Krone/Stamm-Erkennung</summary>
-      <div class="form-group">
-        <label>Stichwörter Krone</label>
-        <div class="form-fields"><input type="text" name="crownWords" value="{{cfg.crownWords}}"></div>
-      </div>
-      <div class="form-group">
-        <label>Stichwörter Stamm</label>
-        <div class="form-fields"><input type="text" name="trunkWords" value="{{cfg.trunkWords}}"></div>
-        <p class="hint">Dateien wie <code>Oak_A_Canopy_4x4.webp</code> und <code>Oak_A_Trunk_4x4.webp</code> werden zu einem Baum zusammengefasst. Bilder ohne Stichwort gelten als ganzer Baum.</p>
-      </div>
-    </details>
+  <fieldset>
+    <legend>Stämme</legend>
+    <p class="hint">Jeder Baum bekommt einen zufälligen Stamm aus diesen Zeilen, gewichtet. Eingebaute Platzhalter: {{builtins}}.</p>
+    <div class="kmw-row kmw-row-trunk kmw-row-head">
+      <span>Ordner</span><span></span><span>Filter</span><span>Gewicht</span><span></span>
+    </div>
+    {{#each trunks}}
+    <div class="kmw-row kmw-row-trunk">
+      <input type="text" name="trunks.{{index}}.folder" value="{{folder}}" placeholder="Ordner">
+      <button type="button" class="icon" data-action="browse" data-target="trunks.{{index}}.folder" data-type="folder" data-tooltip="Ordner wählen"><i class="fa-solid fa-folder-open"></i></button>
+      <input type="text" name="trunks.{{index}}.filter" value="{{filter}}" placeholder="alle">
+      <input type="number" name="trunks.{{index}}.weight" value="{{weight}}" min="0" step="1">
+      <button type="button" class="icon" data-action="removeRow" data-list="trunks" data-index="{{index}}" data-tooltip="Entfernen"><i class="fa-solid fa-trash"></i></button>
+    </div>
+    {{/each}}
+    <button type="button" data-action="addRow" data-list="trunks"><i class="fa-solid fa-plus"></i> Stamm-Zeile hinzufügen</button>
+    <div class="form-group">
+      <label>Stammgröße (Anteil der Krone)</label>
+      <div class="form-fields"><input type="number" name="trunkRatio" value="{{cfg.trunkRatio}}" min="0.05" max="1.5" step="0.05"></div>
+      <p class="hint">0.45 = Stamm-Bild ist 45 % so groß wie die Krone (mindestens 1,2 Felder). Bestimmt auch die Größe der Wände.</p>
+    </div>
   </fieldset>
 
   <fieldset>
@@ -127,7 +138,7 @@
   </fieldset>
 
   <fieldset>
-    <legend>Kronen</legend>
+    <legend>Kronen-Darstellung</legend>
     <div class="form-group">
       <label>Modus</label>
       <div class="form-fields"><select name="crownMode">{{selectOptions crownModes selected=cfg.crownMode}}</select></div>
@@ -153,12 +164,7 @@
     <div class="form-group">
       <label>Platzhalter-Stamm</label>
       <div class="form-fields"><input type="checkbox" name="placeholderTrunks" {{checked cfg.placeholderTrunks}}></div>
-      <p class="hint">Setzt einen Stamm unter Bäume, zu denen kein eigenes Stamm-Bild gefunden wurde.</p>
-    </div>
-    <div class="form-group">
-      <label>Stammdurchmesser (Anteil)</label>
-      <div class="form-fields"><input type="number" name="trunkRatio" value="{{cfg.trunkRatio}}" min="0.05" max="0.8" step="0.01"></div>
-      <p class="hint">Anteil der Kronengröße, bestimmt Platzhalter-Stämme und Wände.</p>
+      <p class="hint">Setzt einen einfachen Stamm, falls in den Stamm-Ordnern nichts gefunden wird.</p>
     </div>
     <div class="form-group">
       <label>FA-Nexus-Schatten</label>
@@ -201,6 +207,31 @@
   </fieldset>
 
   <fieldset>
+    <legend>Totholz</legend>
+    <div class="form-group">
+      <label>Ordner / Filter</label>
+      <div class="form-fields">
+        <input type="text" name="logFolder" value="{{cfg.logFolder}}" placeholder="leer = kein Totholz">
+        <button type="button" class="icon" data-action="browse" data-target="logFolder" data-type="folder" data-tooltip="Ordner wählen"><i class="fa-solid fa-folder-open"></i></button>
+        <input type="text" name="logFilter" value="{{cfg.logFilter}}" placeholder="alle" class="kmw-filter">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Menge / Skala</label>
+      <div class="form-fields">
+        <input type="number" name="logDensity" value="{{cfg.logDensity}}" min="0" step="0.5" data-tooltip="Liegende Stämme pro 10 × 10 Felder">
+        <input type="number" name="logScale" value="{{cfg.logScale}}" min="0.1" step="0.05" data-tooltip="Skalierung">
+      </div>
+      <p class="hint">Liegende Stämme pro 10 × 10 Felder (0 = keine) und Skalierung.</p>
+    </div>
+    <div class="form-group">
+      <label>Schwieriges Gelände</label>
+      <div class="form-fields"><input type="checkbox" name="logDifficult" {{checked cfg.logDifficult}}></div>
+      <p class="hint">Fläche unter jedem liegenden Stamm wird Teil der Unterholz-Region.</p>
+    </div>
+  </fieldset>
+
+  <fieldset>
     <legend>Unterholz / schwieriges Gelände</legend>
     <div class="form-group">
       <label>Unterholz</label>
@@ -221,10 +252,11 @@
       <p class="hint">Anzahl, Durchmesser min und max in Feldern.</p>
     </div>
     <div class="form-group">
-      <label>Busch-Ordner</label>
+      <label>Busch-Ordner / Filter</label>
       <div class="form-fields">
         <input type="text" name="bushFolder" value="{{cfg.bushFolder}}" placeholder="leer = Platzhalter-Busch">
         <button type="button" class="icon" data-action="browse" data-target="bushFolder" data-type="folder" data-tooltip="Ordner wählen"><i class="fa-solid fa-folder-open"></i></button>
+        <input type="text" name="bushFilter" value="{{cfg.bushFilter}}" placeholder="alle" class="kmw-filter">
       </div>
     </div>
     <div class="form-group">
