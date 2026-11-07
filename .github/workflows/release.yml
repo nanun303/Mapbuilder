@@ -19,6 +19,11 @@ jobs:
         working-directory: km-waldgenerator
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
+          # Tags, die keine Versionsnummer sind (z. B. "test"), behalten die Version aus module.json
+          if ! [[ "$VERSION" =~ ^[0-9]+(\.[0-9]+)*$ ]]; then
+            echo "::warning::Tag '${GITHUB_REF_NAME}' ist keine Versionsnummer, nutze Version aus module.json"
+            VERSION="$(jq -r .version module.json)"
+          fi
           DOWNLOAD="https://github.com/${GITHUB_REPOSITORY}/releases/download/${GITHUB_REF_NAME}/km-waldgenerator.zip"
           jq --arg v "$VERSION" --arg d "$DOWNLOAD" '.version = $v | .download = $d' module.json > module.tmp
           mv module.tmp module.json
