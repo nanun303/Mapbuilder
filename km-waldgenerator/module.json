@@ -1,0 +1,17 @@
+{
+  "id": "km-waldgenerator",
+  "title": "Waldgenerator",
+  "description": "Erzeugt große Wald-Battlemaps: Bäume als Tiles mit ausblendbaren Kronen, Stamm-Wänden, Unterholz als schwieriges Gelände, Lichtungen, Wegen und Bodentextur.",
+  "version": "0.1.0",
+  "authors": [{ "name": "Narin" }],
+  "compatibility": {
+    "minimum": "13",
+    "verified": "14.365"
+  },
+  "esmodules": ["scripts/main.js"],
+  "styles": ["styles/forest.css"],
+  "languages": [
+    { "lang": "de", "name": "Deutsch", "path": "lang/de.json" },
+    { "lang": "en", "name": "English", "path": "lang/de.json" }
+  ]
+}

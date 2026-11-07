@@ -1,0 +1,93 @@
+.km-wald .window-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.5rem;
+}
+
+.km-wald .kmw-body {
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 0.25rem;
+}
+
+.km-wald fieldset {
+  margin-bottom: 0.5rem;
+}
+
+.km-wald .form-fields input[type="number"] {
+  width: 5rem;
+  flex: 0 0 auto;
+}
+
+.km-wald .kmw-x {
+  flex: 0 0 auto;
+}
+
+.km-wald .kmw-val {
+  flex: 0 0 2.5rem;
+  text-align: right;
+}
+
+.km-wald .kmw-species {
+  display: grid;
+  grid-template-columns: 1fr 2rem 3.5rem 3.5rem 3.5rem 3.5rem 2rem;
+  gap: 0.25rem;
+  align-items: center;
+  margin-bottom: 0.25rem;
+}
+
+.km-wald .kmw-species input {
+  width: 100%;
+}
+
+.km-wald .kmw-species-head {
+  font-size: var(--font-size-11, 11px);
+  opacity: 0.75;
+}
+
+.km-wald button.icon {
+  width: 2rem;
+  min-width: 2rem;
+  padding: 0;
+}
+
+.km-wald details {
+  margin-top: 0.5rem;
+}
+
+.km-wald details summary {
+  cursor: pointer;
+}
+
+.km-wald label.checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex: 0 0 auto;
+}
+
+.km-wald .kmw-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex: 0 0 auto;
+}
+
+.km-wald .kmw-footer-row {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.km-wald .kmw-footer-row button {
+  flex: 1;
+}
+
+.km-wald .kmw-primary {
+  font-weight: bold;
+}
+
+.km-wald.busy .kmw-footer button {
+  pointer-events: none;
+  opacity: 0.5;
+}

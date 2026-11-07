@@ -1,0 +1,259 @@
+<div class="kmw-body">
+  <fieldset>
+    <legend>Szene</legend>
+    <div class="form-group">
+      <label>Ziel</label>
+      <div class="form-fields">
+        <select name="target">{{selectOptions targets selected=cfg.target}}</select>
+      </div>
+      <p class="hint">Aktuelle Szene: <strong>{{sceneName}}</strong>. Größe und Hintergrund gelten nur für neue Szenen.</p>
+    </div>
+    <div class="form-group">
+      <label>Name</label>
+      <div class="form-fields"><input type="text" name="sceneName" value="{{cfg.sceneName}}"></div>
+    </div>
+    <div class="form-group">
+      <label>Größe (Felder)</label>
+      <div class="form-fields">
+        <input type="number" name="widthF" value="{{cfg.widthF}}" min="5" step="1" title="Breite">
+        <span class="kmw-x">×</span>
+        <input type="number" name="heightF" value="{{cfg.heightF}}" min="5" step="1" title="Höhe">
+      </div>
+      <p class="hint">Bis ca. 100 × 100 läuft meist flüssig, darüber wird es je nach Rechner zäh.</p>
+    </div>
+    <div class="form-group">
+      <label>Pixel pro Feld / Rand</label>
+      <div class="form-fields">
+        <input type="number" name="gridPx" value="{{cfg.gridPx}}" min="50" step="10" title="Pixel pro Feld">
+        <input type="number" name="padding" value="{{cfg.padding}}" min="0" max="0.5" step="0.05" title="Rand (Anteil)">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Hintergrundfarbe</label>
+      <div class="form-fields"><input type="color" name="bgColor" value="{{cfg.bgColor}}"></div>
+    </div>
+  </fieldset>
+
+  <fieldset>
+    <legend>Baumarten</legend>
+    <p class="hint">
+      Ordner mit Baumbildern (Unterordner werden mitgelesen), z. B. ein Unterordner von <code>fa-nexus-assets</code>.
+      Eingebaute Platzhalter: <code>builtin:laub</code>, <code>builtin:nadel</code>.
+    </p>
+    <div class="kmw-species kmw-species-head">
+      <span>Ordner</span><span></span><span>Gewicht</span><span>Größe</span><span>Skala min</span><span>Skala max</span><span></span>
+    </div>
+    {{#each species}}
+    <div class="kmw-species">
+      <input type="text" name="species.{{index}}.folder" value="{{folder}}" placeholder="Ordner">
+      <button type="button" class="icon" data-action="browse" data-target="species.{{index}}.folder" data-type="folder" data-tooltip="Ordner wählen"><i class="fa-solid fa-folder-open"></i></button>
+      <input type="number" name="species.{{index}}.weight" value="{{weight}}" min="0" step="1" data-tooltip="Wie häufig diese Art vorkommt">
+      <input type="number" name="species.{{index}}.baseSize" value="{{baseSize}}" min="0.5" step="0.5" data-tooltip="Größe in Feldern, falls der Dateiname keine enthält (FA: _4x4)">
+      <input type="number" name="species.{{index}}.scaleMin" value="{{scaleMin}}" min="0.1" step="0.05">
+      <input type="number" name="species.{{index}}.scaleMax" value="{{scaleMax}}" min="0.1" step="0.05">
+      <button type="button" class="icon" data-action="removeSpecies" data-index="{{index}}" data-tooltip="Entfernen"><i class="fa-solid fa-trash"></i></button>
+    </div>
+    {{/each}}
+    <button type="button" data-action="addSpecies"><i class="fa-solid fa-plus"></i> Baumart hinzufügen</button>
+
+    <details>
+      <summary>Krone/Stamm-Erkennung</summary>
+      <div class="form-group">
+        <label>Stichwörter Krone</label>
+        <div class="form-fields"><input type="text" name="crownWords" value="{{cfg.crownWords}}"></div>
+      </div>
+      <div class="form-group">
+        <label>Stichwörter Stamm</label>
+        <div class="form-fields"><input type="text" name="trunkWords" value="{{cfg.trunkWords}}"></div>
+        <p class="hint">Dateien wie <code>Oak_A_Canopy_4x4.webp</code> und <code>Oak_A_Trunk_4x4.webp</code> werden zu einem Baum zusammengefasst. Bilder ohne Stichwort gelten als ganzer Baum.</p>
+      </div>
+    </details>
+  </fieldset>
+
+  <fieldset>
+    <legend>Verteilung</legend>
+    <div class="form-group">
+      <label>Mindestabstand (Felder)</label>
+      <div class="form-fields"><input type="number" name="minDist" value="{{cfg.minDist}}" min="0.5" step="0.25"></div>
+      <p class="hint">Abstand zwischen den Stämmen. Kronen dürfen sich überlappen.</p>
+    </div>
+    <div class="form-group">
+      <label>Dichte (%)</label>
+      <div class="form-fields"><input type="range" name="density" value="{{cfg.density}}" min="1" max="100" step="1"><span class="kmw-val">{{cfg.density}}</span></div>
+    </div>
+    <div class="form-group">
+      <label>Gruppierung (%)</label>
+      <div class="form-fields"><input type="range" name="clumping" value="{{cfg.clumping}}" min="0" max="100" step="1"><span class="kmw-val">{{cfg.clumping}}</span></div>
+      <p class="hint">0 = gleichmäßig verteilt, 100 = dichte Baumgruppen mit Lücken dazwischen.</p>
+    </div>
+    <div class="form-group">
+      <label>Randabstand (Felder)</label>
+      <div class="form-fields"><input type="number" name="edgeMargin" value="{{cfg.edgeMargin}}" min="0" step="0.5"></div>
+    </div>
+    <div class="form-group">
+      <label>Seed</label>
+      <div class="form-fields">
+        <input type="text" name="seed" value="{{cfg.seed}}" placeholder="leer = zufällig">
+        <button type="button" class="icon" data-action="rollSeed" data-tooltip="Neu würfeln"><i class="fa-solid fa-dice"></i></button>
+      </div>
+      <p class="hint">Gleicher Seed und gleiche Einstellungen ergeben denselben Wald.</p>
+    </div>
+  </fieldset>
+
+  <fieldset>
+    <legend>Freiflächen</legend>
+    <div class="form-group">
+      <label>Zeichnungen freihalten</label>
+      <div class="form-fields"><input type="checkbox" name="useDrawings" {{checked cfg.useDrawings}}></div>
+      <p class="hint">Alle Rechtecke, Ellipsen und Polygone der Szene bleiben baumfrei (Lager, Ruinen, Gewässer …).</p>
+    </div>
+    <div class="form-group">
+      <label>Zufällige Lichtungen</label>
+      <div class="form-fields">
+        <input type="number" name="clearings" value="{{cfg.clearings}}" min="0" step="1" data-tooltip="Anzahl">
+        <input type="number" name="clearingMin" value="{{cfg.clearingMin}}" min="1" step="1" data-tooltip="Durchmesser min (Felder)">
+        <input type="number" name="clearingMax" value="{{cfg.clearingMax}}" min="1" step="1" data-tooltip="Durchmesser max (Felder)">
+      </div>
+      <p class="hint">Anzahl, Durchmesser min und max in Feldern.</p>
+    </div>
+    <div class="form-group">
+      <label>Wege</label>
+      <div class="form-fields">
+        <input type="number" name="paths" value="{{cfg.paths}}" min="0" step="1" data-tooltip="Anzahl">
+        <input type="number" name="pathWidth" value="{{cfg.pathWidth}}" min="0.5" step="0.5" data-tooltip="Breite (Felder)">
+      </div>
+      <p class="hint">Anzahl und Breite in Feldern. Wege verlaufen geschwungen von Rand zu Rand.</p>
+    </div>
+  </fieldset>
+
+  <fieldset>
+    <legend>Kronen</legend>
+    <div class="form-group">
+      <label>Modus</label>
+      <div class="form-fields"><select name="crownMode">{{selectOptions crownModes selected=cfg.crownMode}}</select></div>
+    </div>
+    <div class="form-group">
+      <label>Ausblenden</label>
+      <div class="form-fields"><select name="occlusion">{{selectOptions occlusions selected=cfg.occlusion}}</select></div>
+    </div>
+    <div class="form-group">
+      <label>Deckkraft ausgeblendet</label>
+      <div class="form-fields"><input type="range" name="occlusionAlpha" value="{{cfg.occlusionAlpha}}" min="0" max="1" step="0.05"><span class="kmw-val">{{cfg.occlusionAlpha}}</span></div>
+      <p class="hint">0 = Krone verschwindet ganz, 0.3 = bleibt leicht sichtbar.</p>
+    </div>
+    <div class="form-group">
+      <label>Kronenhöhe (ft)</label>
+      <div class="form-fields"><input type="number" name="crownElevation" value="{{cfg.crownElevation}}" min="1" step="1"></div>
+      <p class="hint">Fliegende Tokens oberhalb dieser Höhe sind über den Kronen.</p>
+    </div>
+    <div class="form-group">
+      <label>Zufällige Drehung</label>
+      <div class="form-fields"><input type="checkbox" name="randomRotation" {{checked cfg.randomRotation}}></div>
+    </div>
+    <div class="form-group">
+      <label>Platzhalter-Stamm</label>
+      <div class="form-fields"><input type="checkbox" name="placeholderTrunks" {{checked cfg.placeholderTrunks}}></div>
+      <p class="hint">Setzt einen Stamm unter Bäume, zu denen kein eigenes Stamm-Bild gefunden wurde.</p>
+    </div>
+    <div class="form-group">
+      <label>Stammdurchmesser (Anteil)</label>
+      <div class="form-fields"><input type="number" name="trunkRatio" value="{{cfg.trunkRatio}}" min="0.05" max="0.8" step="0.01"></div>
+      <p class="hint">Anteil der Kronengröße, bestimmt Platzhalter-Stämme und Wände.</p>
+    </div>
+    <div class="form-group">
+      <label>FA-Nexus-Schatten</label>
+      <div class="form-fields"><input type="checkbox" name="faShadows" {{checked cfg.faShadows}} {{#unless faActive}}disabled{{/unless}}></div>
+      {{#unless faActive}}<p class="hint">FA Nexus ist nicht aktiv.</p>{{/unless}}
+    </div>
+    <div class="form-group">
+      <label>Tiles sperren</label>
+      <div class="form-fields"><input type="checkbox" name="lockTiles" {{checked cfg.lockTiles}}></div>
+    </div>
+    <div class="form-group">
+      <label>Vorherigen Wald ersetzen</label>
+      <div class="form-fields"><input type="checkbox" name="replaceExisting" {{checked cfg.replaceExisting}}></div>
+      <p class="hint">Entfernt vor dem Erzeugen nur Objekte, die der Waldgenerator angelegt hat.</p>
+    </div>
+  </fieldset>
+
+  <fieldset>
+    <legend>Stämme als Hindernis</legend>
+    <div class="form-group">
+      <label>Wände um Stämme</label>
+      <div class="form-fields"><input type="checkbox" name="walls" {{checked cfg.walls}}></div>
+    </div>
+    <div class="form-group">
+      <label>Ab Baumgröße (Felder)</label>
+      <div class="form-fields"><input type="number" name="wallMinSize" value="{{cfg.wallMinSize}}" min="0" step="0.5"></div>
+    </div>
+    <div class="form-group">
+      <label>Blockiert</label>
+      <div class="form-fields">
+        <label class="checkbox"><input type="checkbox" name="wallMove" {{checked cfg.wallMove}}> Bewegung</label>
+        <label class="checkbox"><input type="checkbox" name="wallSight" {{checked cfg.wallSight}}> Sicht &amp; Licht</label>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Ecken pro Stamm</label>
+      <div class="form-fields"><input type="number" name="wallSides" value="{{cfg.wallSides}}" min="3" max="12" step="1"></div>
+      <p class="hint">Weniger Ecken = weniger Wände = bessere Leistung.</p>
+    </div>
+  </fieldset>
+
+  <fieldset>
+    <legend>Unterholz / schwieriges Gelände</legend>
+    <div class="form-group">
+      <label>Unterholz</label>
+      <div class="form-fields"><select name="undergrowth">{{selectOptions undergrowths selected=cfg.undergrowth}}</select></div>
+    </div>
+    <div class="form-group">
+      <label>Geländeart</label>
+      <div class="form-fields"><select name="difficulty">{{selectOptions difficulties selected=cfg.difficulty}}</select></div>
+      <p class="hint">Wird als PF2e-Region „Umgebungsmerkmal“ angelegt. Freiflächen sind ausgespart.</p>
+    </div>
+    <div class="form-group">
+      <label>Flecken</label>
+      <div class="form-fields">
+        <input type="number" name="patchCount" value="{{cfg.patchCount}}" min="0" step="1" data-tooltip="Anzahl">
+        <input type="number" name="patchMin" value="{{cfg.patchMin}}" min="1" step="1" data-tooltip="Durchmesser min (Felder)">
+        <input type="number" name="patchMax" value="{{cfg.patchMax}}" min="1" step="1" data-tooltip="Durchmesser max (Felder)">
+      </div>
+      <p class="hint">Anzahl, Durchmesser min und max in Feldern.</p>
+    </div>
+    <div class="form-group">
+      <label>Busch-Ordner</label>
+      <div class="form-fields">
+        <input type="text" name="bushFolder" value="{{cfg.bushFolder}}" placeholder="leer = Platzhalter-Busch">
+        <button type="button" class="icon" data-action="browse" data-target="bushFolder" data-type="folder" data-tooltip="Ordner wählen"><i class="fa-solid fa-folder-open"></i></button>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Buschdichte (%) / Größe</label>
+      <div class="form-fields">
+        <input type="number" name="bushDensity" value="{{cfg.bushDensity}}" min="0" max="100" step="5" data-tooltip="Dichte (%)">
+        <input type="number" name="bushSize" value="{{cfg.bushSize}}" min="0.25" step="0.25" data-tooltip="Größe (Felder)">
+      </div>
+    </div>
+  </fieldset>
+
+  <fieldset>
+    <legend>Boden</legend>
+    <div class="form-group">
+      <label>Bodentextur</label>
+      <div class="form-fields">
+        <input type="text" name="groundTexture" value="{{cfg.groundTexture}}" placeholder="leer = nur Hintergrundfarbe">
+        <button type="button" class="icon" data-action="browse" data-target="groundTexture" data-type="image" data-tooltip="Bild wählen"><i class="fa-solid fa-file-image"></i></button>
+      </div>
+      <p class="hint">Nahtlose Textur, wird als Raster aus Tiles verlegt.</p>
+    </div>
+    <div class="form-group">
+      <label>Kachelgröße (Felder)</label>
+      <div class="form-fields"><input type="number" name="groundTileSize" value="{{cfg.groundTileSize}}" min="1" step="1"></div>
+    </div>
+    <div class="form-group">
+      <label>Kacheln drehen</label>
+      <div class="form-fields"><input type="checkbox" name="groundRotate" {{checked cfg.groundRotate}}></div>
+      <p class="hint">Bricht Wiederholungen auf. Nur bei Texturen nutzen, die auch gedreht nahtlos sind.</p>
+    </div>
+  </fieldset>
+</div>
