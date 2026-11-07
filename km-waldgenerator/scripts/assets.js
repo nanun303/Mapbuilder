@@ -156,6 +156,11 @@ export async function loadAssets(cfg) {
     }
   }
 
+  // Hitbox der Stämme für die Stamm-Wände
+  if (cfg.walls) {
+    await Promise.all(trunks.flatMap((set) => set.files).map(async (f) => (f.hull = await imageHull(f.src))));
+  }
+
   const logs = cfg.logDensity > 0 ? await cache.files(cfg.logFolder, cfg.logFilter) : [];
   // Hitbox: Umriss der sichtbaren Pixel jedes Totholz-Bildes, für Cover-Wände und Klettern
   if (cfg.logCover) {

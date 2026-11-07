@@ -364,7 +364,9 @@ export function planForest(dims, cfg, assets, drawings = []) {
       const rotation = cfg.randomRotation ? Math.round(rng.float(0, 360)) : 0;
       const tree = { x, y, w, h, rotation, size, crown: crown.src, trunk: null, trunkSize: 0, trunkRotation: 0 };
       if (assets.trunks.length) {
-        tree.trunk = rng.pick(rng.weighted(assets.trunks, (s) => s.weight).files).src;
+        const trunk = rng.pick(rng.weighted(assets.trunks, (s) => s.weight).files);
+        tree.trunk = trunk.src;
+        tree.trunkHull = trunk.hull ?? null;
         tree.trunkSize = Math.max(g * 1.2, size * cfg.trunkRatio);
         tree.trunkRotation = Math.round(rng.float(0, 360));
       }
@@ -430,7 +432,16 @@ export function planForest(dims, cfg, assets, drawings = []) {
     const sides = Math.max(3, Math.round(cfg.wallSides));
     for (const t of trees) {
       if (t.size < cfg.wallMinSize * g) continue;
-      // Der eigentliche Stamm füllt etwa die Hälfte des Stamm-Bildes, der Rest sind Wurzeln
+      // Hitbox aus dem Stamm-Bild (Stumpf ohne dünne Wurzeln), auf das Stamm-Tile übertragen
+      if (t.trunkHull) {
+        const pts = hullToWorld(t.trunkHull, t.x, t.y, t.trunkSize, t.trunkSize, t.trunkRotation);
+        for (let i = 0; i < pts.length; i += 2) {
+          const j = (i + 2) % pts.length;
+          if (pts[i] !== pts[j] || pts[i + 1] !== pts[j + 1]) walls.push([pts[i], pts[i + 1], pts[j], pts[j + 1]]);
+        }
+        continue;
+      }
+      // Ohne Stamm-Bild: Vieleck um die Mitte; der Stamm füllt etwa die Hälfte des Stamm-Bildes
       const r = Math.max(g * 0.15, (t.trunkSize || t.size * cfg.trunkRatio) * 0.22);
       const off = rng.next() * Math.PI * 2;
       const pts = [];

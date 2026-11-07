@@ -11,6 +11,8 @@ import { DEFAULT_HULL, hullToWorld } from "./generator.js";
 
 const MAX_HULL_POINTS = 10;
 const SAMPLE_SIZE = 128;
+/** Anteil der dicksten Stelle, ab dem Teile als "dünn" (Ast, Wurzel) gelten und nicht zur Hitbox gehören. */
+const OPEN_FACTOR = 0.5;
 
 /* -------------------------------------------- */
 /*  Umriss aus Bildpixeln                       */
@@ -53,19 +55,92 @@ async function computeHull(src) {
   ctx.drawImage(img, 0, 0, w, h);
   const data = ctx.getImageData(0, 0, w, h).data;
 
-  const solid = (x, y) => x >= 0 && y >= 0 && x < w && y < h && data[(y * w + x) * 4 + 3] > 128;
+  const mask = new Uint8Array(w * h);
+  for (let i = 0; i < w * h; i++) mask[i] = data[i * 4 + 3] > 128 ? 1 : 0;
+  const hull = bodyHull(mask, w, h);
+  return hull ? hull.flatMap(([x, y]) => [Math.min(1, Math.max(0, x / w)), Math.min(1, Math.max(0, y / h))]) : null;
+}
+
+/**
+ * Hülle des Hauptkörpers einer Maske (Stamm, Schnittfläche), ohne dünne Teile wie Äste und Wurzeln:
+ * Pixel, die näher als r am Rand liegen, fallen weg (r = Anteil der dicksten Stelle). Vom größten
+ * verbleibenden Stück wird die konvexe Hülle gebildet und wieder um r aufgeweitet.
+ * Exportiert für Tests; arbeitet auf einer 0/1-Maske in Pixeln.
+ */
+export function bodyHull(mask, w, h, openFactor = OPEN_FACTOR) {
+  const dist = distanceTransform(mask, w, h);
+  let maxD = 0;
+  for (const d of dist) maxD = Math.max(maxD, d);
+  if (maxD === 0) return null;
+  const r = maxD >= 3 ? openFactor * maxD : 0;
+
+  // größtes zusammenhängendes Stück, das dicker als 2r ist
+  const core = largestComponent(dist, w, h, r);
   const pts = [];
-  for (let y = 0; y < h; y++) {
-    for (let x = 0; x < w; x++) {
-      if (!solid(x, y)) continue;
-      // nur Randpixel, das reicht für die konvexe Hülle
-      if (solid(x - 1, y) && solid(x + 1, y) && solid(x, y - 1) && solid(x, y + 1)) continue;
-      pts.push([x, y], [x + 1, y], [x, y + 1], [x + 1, y + 1]);
-    }
+  for (const i of core) {
+    const x = i % w;
+    const y = (i - x) / w;
+    pts.push([x, y], [x + 1, y], [x, y + 1], [x + 1, y + 1]);
   }
   if (pts.length < 3) return null;
-  const hull = simplifyHull(convexHull(pts), MAX_HULL_POINTS);
-  return hull.flatMap(([x, y]) => [x / w, y / h]);
+  let hull = convexHull(pts);
+  if (r > 0) {
+    // um r aufweiten: Kreis um jede Ecke, davon wieder die Hülle
+    const grown = [];
+    for (const [x, y] of hull) {
+      for (let k = 0; k < 12; k++) grown.push([x + Math.cos((k * Math.PI) / 6) * r, y + Math.sin((k * Math.PI) / 6) * r]);
+    }
+    hull = convexHull(grown);
+  }
+  return simplifyHull(hull, MAX_HULL_POINTS);
+}
+
+/** Abstand jedes deckenden Pixels zum nächsten transparenten Pixel oder Bildrand (Chamfer 3-4), in Pixeln. */
+function distanceTransform(mask, w, h) {
+  const INF = 1e9;
+  const d = new Float64Array(w * h);
+  for (let i = 0; i < w * h; i++) d[i] = mask[i] ? INF : 0;
+  const at = (x, y) => (x < 0 || y < 0 || x >= w || y >= h ? 0 : d[y * w + x]);
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const i = y * w + x;
+      if (!d[i]) continue;
+      d[i] = Math.min(d[i], at(x - 1, y) + 3, at(x, y - 1) + 3, at(x - 1, y - 1) + 4, at(x + 1, y - 1) + 4);
+    }
+  }
+  for (let y = h - 1; y >= 0; y--) {
+    for (let x = w - 1; x >= 0; x--) {
+      const i = y * w + x;
+      if (!d[i]) continue;
+      d[i] = Math.min(d[i], at(x + 1, y) + 3, at(x, y + 1) + 3, at(x + 1, y + 1) + 4, at(x - 1, y + 1) + 4);
+    }
+  }
+  for (let i = 0; i < w * h; i++) d[i] /= 3;
+  return d;
+}
+
+/** Pixel-Indizes des größten zusammenhängenden Bereichs mit Abstand > r. */
+function largestComponent(dist, w, h, r) {
+  const seen = new Uint8Array(w * h);
+  let best = [];
+  for (let start = 0; start < w * h; start++) {
+    if (seen[start] || dist[start] <= r) continue;
+    const comp = [];
+    const stack = [start];
+    seen[start] = 1;
+    while (stack.length) {
+      const i = stack.pop();
+      comp.push(i);
+      const x = i % w;
+      for (const j of [i - w, i + w, x > 0 ? i - 1 : -1, x < w - 1 ? i + 1 : -1]) {
+        if (j < 0 || j >= w * h || seen[j] || dist[j] <= r) continue;
+        seen[j] = 1;
+        stack.push(j);
+      }
+    }
+    if (comp.length > best.length) best = comp;
+  }
+  return best;
 }
 
 function convexHull(points) {
