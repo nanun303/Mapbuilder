@@ -55,7 +55,7 @@ export const DEFAULTS = {
   placeholderTrunks: true,
   trunkRatio: 0.45,
   faShadows: true,
-  lockTiles: true,
+  lockTiles: false,
   replaceExisting: true,
 
   // Hindernisse

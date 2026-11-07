@@ -2,7 +2,7 @@
   "id": "km-waldgenerator",
   "title": "Waldgenerator",
   "description": "Erzeugt große Wald-Battlemaps: Bäume als Tiles mit ausblendbaren Kronen, Stamm-Wänden, Unterholz als schwieriges Gelände, Lichtungen, Wegen und Bodentextur.",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "authors": [{ "name": "Narin" }],
   "url": "https://github.com/nanun303/Mapbuilder",
   "manifest": "https://github.com/nanun303/Mapbuilder/releases/latest/download/module.json",

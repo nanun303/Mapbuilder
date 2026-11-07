@@ -77,11 +77,20 @@ function occlusionData(cfg) {
   return { mode, alpha: cfg.occlusionAlpha };
 }
 
+/**
+ * Position eines Tiles aus seinem Mittelpunkt.
+ * Ab v14 bezeichnet x/y den Ankerpunkt des Tiles (anchorX/anchorY, hier die Mitte),
+ * in v13 die linke obere Ecke.
+ */
+function tilePosition(cx, cy, w, h) {
+  if (game.release.generation >= 14) return { x: Math.round(cx), y: Math.round(cy), anchorX: 0.5, anchorY: 0.5 };
+  return { x: Math.round(cx - w / 2), y: Math.round(cy - h / 2) };
+}
+
 function tileData(src, cx, cy, w, h, rotation, kind, sort, cfg, extra = {}) {
   const base = {
     texture: { src },
-    x: Math.round(cx - w / 2),
-    y: Math.round(cy - h / 2),
+    ...tilePosition(cx, cy, w, h),
     width: Math.round(w),
     height: Math.round(h),
     rotation,
